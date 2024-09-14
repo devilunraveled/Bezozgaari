@@ -94,7 +94,7 @@ def extract_numeric_value(string):
     except Exception :
         return None
 
-def exactMatchUnits(imageContent : str, targetUnit : str):
+def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str):
     """
     Return all occurences of the exact match in the imageContent.
     Returns the float value it found prior to the unit.
@@ -107,11 +107,13 @@ def exactMatchUnits(imageContent : str, targetUnit : str):
     for possibleAnswer in possibleAnswers:
         # Split based on space to the last part beyond which the unit was mentioned.
         possibleAnswer = possibleAnswer.strip()
+        if len(possibleAnswer) == 0:
+            continue
         possibleAnswer = possibleAnswer.split()[-1]
         # Check if the last part is a float
         value = extract_numeric_value(possibleAnswer)
         if value != None :
-            values.add(value)
+            values.add((value, outputUnit))
 
 
     # Return the values
@@ -123,7 +125,7 @@ def extractPossibleAnswer(imageContent : str , targetMetric : str ):
     possibleAnswers = set()
     for targetUnit in targetUnits:
         for possibleUnit in aliases.get(targetUnit, [targetUnit]):
-            print(f"Searching for {targetMetric} in {possibleUnit}")
-            possibleAnswers.update(exactMatchUnits(imageContent, possibleUnit))
+            # print(f"Searching for {targetMetric} in {possibleUnit}")
+            possibleAnswers.update(exactMatchUnits(imageContent, possibleUnit, targetUnit))
 
     return list(possibleAnswers)
