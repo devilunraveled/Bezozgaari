@@ -38,44 +38,61 @@ def isCorrect(expected, output):
 def conversionFactor(units, baseUnits):
     return conversion_factor[units][baseUnits]
 
-def getResult():
+def getResult(startIndex, endIndex, data ):
     correct = 0
     total = 0
     trueCorrect = 0
     predictions : list[tuple[int,str]] = []
-    with alive_bar(len(trainData)) as bar:
-        for index ,datapoint in trainData.iterrows():
-            try:
-                imageLink = datapoint['image_link']
-                targetMetric = str(datapoint['entity_name'])
-                standardUnit = list(entity_unit_map[targetMetric])[0]
-                
-                image = Image(str(imageLink), str(datapoint['image_id']))
-                image.getImage()
-                
-                answer = datapoint['entity_value']
-                output = extractPossibleAnswer(image.readTextFrom(), targetMetric)
-                maxOutput = max(output, key=lambda x: x[0]*conversionFactor(standardUnit, x[1]))
-                output = [f"{value} {unit}" for value, unit in output]
-                
-                # Is answer contained.
-                for posAns in output :
-                    if isCorrect(answer, posAns):
-                        correct += 1
-                        break
-                total += 1
-                
-                if len(output) >= 1 and isCorrect(answer, output[0]):
-                    trueCorrect += 1
-                    predictions.append((int(datapoint['image_id']), maxOutput))
-                else :
-                    print(f"Image Index : {index}\nAnswer : {answer}\nPredicted : {maxOutput}\nOutput : {output}")
-                
-                bar.text = f"Correct : {correct}/{total} True Correct : {trueCorrect}/{total}"
-                bar()
-            except Exception:
-                total += 1
-                bar.text = f"Correct : {correct}/{total} True Correct : {trueCorrect}/{total}"
-                bar()
-                continue
-getResult()
+    
+    data = data[startIndex:endIndex]
+    try :
+        with alive_bar(len(data)) as bar:
+            for _ ,datapoint in data.iterrows():
+                try:
+                    imageLink = datapoint['image_link']
+                    targetMetric = str(datapoint['entity_name'])
+                    standardUnit = list(entity_unit_map[targetMetric])[0]
+                    
+                    image = Image(str(imageLink), str(datapoint['image_id']))
+                    image.getImage()
+                    
+                    answer = datapoint['entity_value']
+                    output = extractPossibleAnswer(image.readTextFrom(), targetMetric)
+                    maxOutput = max(output, key=lambda x: x[0]*conversionFactor(standardUnit, x[1]))
+                    output = [f"{value} {unit}" for value, unit in output]
+                    
+                    # Is answer contained.
+                    for posAns in output :
+                        if isCorrect(answer, posAns):
+                            correct += 1
+                            break
+                    total += 1
+                    
+                    if len(output) >= 1 and isCorrect(answer, output[0]):
+                        trueCorrect += 1
+
+                    predictions.append((int(datapoint['image_id']), f'{maxOutput[0]} {maxOutput[1]}'))
+                    # else :
+                    #     print(f"Image Index : {index}\nAnswer : {answer}\nPredicted : {maxOutput}\nOutput : {output}")
+                    
+                    bar.text = f"Correct : {correct}/{total} True Correct : {trueCorrect}/{total}"
+                    bar()
+                except Exception:
+                    total += 1
+                    bar.text = f"Correct : {correct}/{total} True Correct : {trueCorrect}/{total}"
+                    predictions.append((int(datapoint['image_id']), '10 gram'))
+                    bar()
+                    continue
+    except Exception as e:
+        print(e)
+    finally :
+        # with open(f'result_{startIndex}_{endIndex}.pkl', 'wb') as f:
+        #     import pickle
+        #     pickle.dump(predictions, f)
+
+        onlyPredictions = [prediction[1] for prediction in predictions]
+        print(onlyPredictions)
+        with open(f'result_{startIndex}_{endIndex}.txt', 'w', encoding='utf-8') as f:
+            f.write('\n'.join(onlyPredictions))
+
+getResult(40, 60, trainData)
