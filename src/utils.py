@@ -94,6 +94,16 @@ def extract_numeric_value(string):
     except Exception :
         return None
 
+def extractInteger(string):
+    # Use regex to find integers
+    try :
+        if string.isnumeric():
+            return int(string)
+        else :
+            return None
+    except Exception :
+        return None
+
 def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str):
     """
     Return all occurences of the exact match in the imageContent.
@@ -104,13 +114,23 @@ def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str):
     possibleAnswers = imageContent.split(f'{targetUnit}')
     
     values = set()
+    if not imageContent.endswith(targetUnit):
+        possibleAnswers = possibleAnswers[:-1]
+
     for possibleAnswer in possibleAnswers:
         # Split based on space to the last part beyond which the unit was mentioned.
         possibleAnswer = possibleAnswer.strip()
         if len(possibleAnswer) == 0:
             continue
         possibleAnswer = possibleAnswer.split()[-1]
-        # Check if the last part is a float
+
+        # Check if the last part is an integer
+        integerValue = extractInteger(possibleAnswer)
+        if integerValue != None :
+            values.add((integerValue, outputUnit))
+            continue
+
+        # Check if it is a float
         value = extract_numeric_value(possibleAnswer)
         if value != None :
             values.add((value, outputUnit))

@@ -3,3 +3,4 @@ pillow
 tqdm
 bidict
 pytesseract
+alive-progress

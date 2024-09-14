@@ -59,9 +59,8 @@ class Image:
         if self.image is None:
             raise Exception("Image not loaded")
         
-        # prediction = detectText(self.imageURL)
-        # prediction = getCenters(prediction)
-        # prediction = getImgString(prediction)
+        prediction = detectText(self.imageURL)
+        prediction = getCenters(prediction)
+        prediction = getImgString(prediction)
 
-        # return prediction
-        return Tesseract.image_to_string(self.image)
+        return prediction
