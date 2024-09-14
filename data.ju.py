@@ -36,11 +36,11 @@ trainData['image_id'] = trainData['image_link'].map(lambda x : imageMap.get(x, -
 from src.image import Image
 
 # %%
-index = 5
+index = 75350
 sampleImage = Image(trainData['image_link'][index], trainData['image_id'][index])
 
 # %%
 sampleImage.getImage()
 
 # %%
-sampleImage.image
+print(sampleImage.readTextFrom())
