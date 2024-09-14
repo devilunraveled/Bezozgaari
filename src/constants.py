@@ -42,13 +42,13 @@ aliases = {
     'foot' : {
         'foot',
         'feet',
-        "''",
+        "'",
         'ft',
     },
     'inch' : {
         'inch',
         'inches',
-        "'",
+        "''",
         'in',
     },
     'metre' : {
@@ -155,6 +155,7 @@ aliases = {
         'fluid ounces',
         'fl oz',
         'fl',
+        'oz'
     },
     'gallon' : {
         'gallon',

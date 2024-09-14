@@ -77,11 +77,55 @@ def download_images(image_links, download_folder, allow_multiprocessing=True):
         download_image_partial = partial(
             download_image, save_folder=download_folder, retries=3, delay=3)
 
-        with multiprocessing.Pool(64) as pool:
+        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
             list(tqdm(pool.imap(download_image_partial, image_links), total=len(image_links)))
             pool.close()
             pool.join()
     else:
         for image_link in tqdm(image_links, total=len(image_links)):
             download_image(image_link, save_folder=download_folder, retries=3, delay=3)
-        
+       
+
+def extract_numeric_value(string):
+    # Use regex to find numbers (both integers and decimals)
+    try :
+        match = re.search(r'\d+(\.\d+)?', string)
+        return float(match.group(0)) if match else None
+    except Exception :
+        return None
+
+def exactMatchUnits(imageContent : str, targetUnit : str):
+    """
+    Return all occurences of the exact match in the imageContent.
+    Returns the float value it found prior to the unit.
+    """
+
+    # Split the imageContent wherever we find the matching targetUnit ( with a space )
+    possibleAnswers = imageContent.split(f'{targetUnit}')
+    
+    values = set()
+    for possibleAnswer in possibleAnswers:
+        # Split based on space to the last part beyond which the unit was mentioned.
+        print(possibleAnswer)
+        if possibleAnswers.count(' ') > 1:
+            possibleAnswer = possibleAnswer.split()[-1]
+        print(possibleAnswer)
+        # Check if the last part is a float
+        value = extract_numeric_value(possibleAnswer)
+        if value != None :
+            values.add(value)
+
+
+    # Return the values
+    return values
+
+def extractPossibleAnswer(imageContent : str , targetMetric : str ):
+    targetUnits = entity_unit_map[targetMetric]
+    
+    possibleAnswers = set()
+    for targetUnit in targetUnits:
+        for possibleUnit in aliases.get(targetUnit, [targetUnit]):
+            print(f"Searching for {targetMetric} in {possibleUnit}")
+            possibleAnswers.update(exactMatchUnits(imageContent, possibleUnit))
+
+    return list(possibleAnswers)
