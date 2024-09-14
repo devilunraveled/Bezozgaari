@@ -6,7 +6,6 @@ import os
 # %%
 DATASET_FOLDER = './dataset/'
 TRAIN_FILE = 'train.csv'
-IMAGE_FOLDER = "./imgs/"
 
 trainData = pd.read_csv(os.path.join(DATASET_FOLDER, TRAIN_FILE))
 
@@ -20,10 +19,22 @@ trainData['image_id'] = trainData['image_link'].map(lambda x : imageMap.get(x, -
 
 from src.utils import extractPossibleAnswer
 from src.image import Image
+from alive_progress import alive_bar
 
 # %%
-for index ,datapoint in trainData.iterrows():
-    imageLink = datapoint['image_link']
-    targetMetric = str(datapoint['entity_name']).split('_')[1]
-    image = Image(str(imageLink), str(datapoint['image_id']))
-    print( extractPossibleAnswer(image.readTextFrom(), targetMetric) )
+correct = 0
+total = 0
+with alive_bar(len(trainData)) as bar:
+    for index ,datapoint in trainData.iterrows():
+        imageLink = datapoint['image_link']
+        targetMetric = str(datapoint['entity_name']).split('_')[1]
+        image = Image(str(imageLink), str(datapoint['image_id']))
+        image.getImage()
+        answer = datapoint['entity_value']
+        output = extractPossibleAnswer(image.readTextFrom(), targetMetric)
+        if answer in output:
+            correct += 1
+        total += 1
+
+        bar.text = f"{correct}/{total}"
+        bar()

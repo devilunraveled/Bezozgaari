@@ -106,10 +106,8 @@ def exactMatchUnits(imageContent : str, targetUnit : str):
     values = set()
     for possibleAnswer in possibleAnswers:
         # Split based on space to the last part beyond which the unit was mentioned.
-        print(possibleAnswer)
-        if possibleAnswers.count(' ') > 1:
-            possibleAnswer = possibleAnswer.split()[-1]
-        print(possibleAnswer)
+        possibleAnswer = possibleAnswer.strip()
+        possibleAnswer = possibleAnswer.split()[-1]
         # Check if the last part is a float
         value = extract_numeric_value(possibleAnswer)
         if value != None :
