@@ -90,7 +90,9 @@ def extract_numeric_value(string):
     # Use regex to find numbers (both integers and decimals)
     try :
         match = re.search(r'\d+(\.\d+)?', string)
-        return float(match.group(0)) if match else None
+        if match and (match.group(0) == string):
+            return float(match.group(0)) if match else None
+        return None
     except Exception :
         return None
 
@@ -104,7 +106,7 @@ def extractInteger(string):
     except Exception :
         return None
 
-def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str):
+def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str, stdUnit : str):
     """
     Return all occurences of the exact match in the imageContent.
     Returns the float value it found prior to the unit.
@@ -112,9 +114,18 @@ def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str):
 
     # Split the imageContent wherever we find the matching targetUnit ( with a space )
     possibleAnswers = imageContent.split(f'{targetUnit}')
-    
+    lastHope = None
+
     values = set()
     if not imageContent.endswith(targetUnit):
+        possibleAnswers[-1] = possibleAnswers[-1].strip()
+        asInt = extractInteger(possibleAnswers[-1])
+        if asInt != None :
+            lastHope = ((asInt, stdUnit))
+        else:
+            asFloat = extract_numeric_value(possibleAnswers[-1])
+            if asFloat != None :
+                lastHope = ((asFloat, stdUnit))
         possibleAnswers = possibleAnswers[:-1]
 
     for possibleAnswer in possibleAnswers:
@@ -135,17 +146,23 @@ def exactMatchUnits(imageContent : str, targetUnit : str, outputUnit : str):
         if value != None :
             values.add((value, outputUnit))
 
+    if len(values) == 0 and lastHope is not None:
+        values.add(lastHope)
 
     # Return the values
     return values
 
+def conversionFactor(units, baseUnits):
+    return conversion_factor[units][baseUnits]
+
 def extractPossibleAnswer(imageContent : str , targetMetric : str ):
     targetUnits = entity_unit_map[targetMetric]
+    stdUnit = list(entity_unit_map[targetMetric])[0]
     
     possibleAnswers = set()
     for targetUnit in targetUnits:
         for possibleUnit in aliases.get(targetUnit, [targetUnit]):
             # print(f"Searching for {targetMetric} in {possibleUnit}")
-            possibleAnswers.update(exactMatchUnits(imageContent, possibleUnit, targetUnit))
+            possibleAnswers.update(exactMatchUnits(imageContent, possibleUnit, targetUnit, stdUnit))
 
     return list(possibleAnswers)

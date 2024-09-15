@@ -399,6 +399,7 @@ aliases = {
         'gram',
         'grams',
         'g',
+		'gr'
     },
     'kilogram' : {
         'kilogram',
