@@ -5,7 +5,7 @@ import os
 
 # %%
 DATASET_FOLDER = './dataset/'
-TRAIN_FILE = 'train.csv'
+TRAIN_FILE = 'test.csv'
 
 # testData = pd.read_csv(os.path.join(DATASET_FOLDER, TEST_FILE))
 #
@@ -113,12 +113,17 @@ def createDataPoints(startIndex, endIndex, data):
 
     with alive_bar(endIndex - startIndex + 1) as bar:
         for i in range(startIndex, endIndex + 1):
-            image = Image(data['image_link'][i], data['image_id'][i])
-            image.getImage()
-            text = image.readTextFrom()
+            try: 
+                image = Image(data['image_link'][i], data['image_id'][i])
+                image.getImage()
+                text = image.readTextFrom()
 
-            writer.writerow([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], text])
-            bar()
+                writer.writerow([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], text])
+                bar()
+            except Exception as e:
+                print(e)
+                writer.writerow([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], 'Context not available'])
+                bar()
 
     csvfile.close()
 
