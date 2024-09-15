@@ -5,17 +5,14 @@ import os
 
 # %%
 DATASET_FOLDER = './dataset/'
-TEST_FILE = 'test.csv'
+TRAIN_FILE = 'train.csv'
 
-testData = pd.read_csv(os.path.join(DATASET_FOLDER, TEST_FILE))
-
-print(testData.columns)
-testData.head()
-
-testData['datapoint_id'] = testData.index
-
-imageMap : Dict[str, int] = { image : id for id, image in enumerate(testData['image_link'].unique()) }
-testData['image_id'] = testData['image_link'].map(lambda x : imageMap.get(x, -1))
+# testData = pd.read_csv(os.path.join(DATASET_FOLDER, TEST_FILE))
+#
+# testData['datapoint_id'] = testData.index
+#
+# imageMap : Dict[str, int] = { image : id for id, image in enumerate(testData['image_link'].unique()) }
+# testData['image_id'] = testData['image_link'].map(lambda x : imageMap.get(x, -1))
 
 from src.utils import extractPossibleAnswer
 from src.image import Image
@@ -99,8 +96,33 @@ def getResult(startIndex, endIndex, data ):
                 f.write(f"{i},{prediction}\n")
 
 
-totalDataPoints = len(testData)
-batchSize = totalDataPoints//10
+def createDataPoints(startIndex, endIndex, data):
+    import csv
+    from typing import Dict
+    from alive_progress import alive_bar
+
+    from src.image import Image
+
+    imageMap : Dict[str, int] = { image : id for id, image in enumerate(data['image_link'].unique()) }
+    data['image_id'] = data['image_link'].map(lambda x : imageMap.get(x, -1))
+
+    fileName = f"tesseract_text_{startIndex}_{endIndex}.csv"
+    csvfile = open(fileName, 'a', newline='')
+    writer = csv.writer(csvfile)
+    writer.writerow(['image_id', 'image_link', 'group_id', 'entity_name', 'text'])
+
+    with alive_bar(endIndex - startIndex + 1) as bar:
+        for i in range(startIndex, endIndex + 1):
+            image = Image(data['image_link'][i], data['image_id'][i])
+            image.getImage()
+            text = image.readTextFrom()
+
+            writer.writerow([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], text])
+            bar()
+
+    csvfile.close()
+
+
 
 # getResult(0, batchSize, testData)
 # getResult(batchSize, batchSize*2, testData)
@@ -113,10 +135,25 @@ batchSize = totalDataPoints//10
 # getResult(batchSize*8, batchSize*9, testData)
 # getResult(batchSize*9, len(testData), testData)
 
-def concatenateFiles():
-    files = [f'result_{batchSize*i}_{batchSize*(i+1)}.csv' for i in range(9)] + [f'result_{batchSize*9}_{totalDataPoints}.csv']
-    overallResults = []
+def runAChunk():
+    trainData = pd.read_csv(os.path.join(DATASET_FOLDER, TRAIN_FILE))
+    chunks = 15
+    totalDataPoints = len(trainData)
+    batchSize = totalDataPoints//chunks
+    
+    i = int(input(f'Enter chunk number(1-{chunks}) : '))
+    if i < 1 or i > chunks:
+        raise Exception
+    
+    start = batchSize*(i-1)
+    end = batchSize*i if i != chunks else len(trainData)
+    
+    createDataPoints(start, end, trainData)
 
-    for file in files :
-        with open(file, 'r', encoding = 'utf-8' ) as f:
+def concatenateFiles(batchSize, chunks, data):
+    files = [ pd.read_csv(f"./result_{batchSize*i}_{batchSize*(i+1)}.csv") for i in range(chunks - 1) ] + [pd.read_csv(f"./result_{batchSize*(chunks - 1)}_{len(data)}.csv")]
+    result = pd.concat(files)
+    result.to_csv("./results.csv", index=False)
 
+runAChunk()
+# concatenateFiles()
