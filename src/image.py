@@ -18,7 +18,6 @@ from pytesseract import pytesseract as Tesseract
 #         center = (center[0] / len(text[1]), center[1] / len(text[1]))
 #         centers.append((text[0], center))
 #     return centers
-
 # def distinguishLines(prediction, thresh=15):
 #     lines = []
 #     for text, center in prediction:
