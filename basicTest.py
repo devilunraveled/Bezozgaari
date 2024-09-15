@@ -97,7 +97,6 @@ def getResult(startIndex, endIndex, data ):
 
 
 def createDataPoints(startIndex, endIndex, data):
-    import csv
     from typing import Dict
     from alive_progress import alive_bar
 
@@ -106,26 +105,29 @@ def createDataPoints(startIndex, endIndex, data):
     imageMap : Dict[str, int] = { image : id for id, image in enumerate(data['image_link'].unique()) }
     data['image_id'] = data['image_link'].map(lambda x : imageMap.get(x, -1))
 
-    fileName = f"tesseract_text_{startIndex}_{endIndex}.csv"
-    csvfile = open(fileName, 'a', newline='')
-    writer = csv.writer(csvfile)
-    writer.writerow(['image_id', 'image_link', 'group_id', 'entity_name', 'text'])
+    fileName = f"easyocr_text_{startIndex}_{endIndex}.pkl"
+    
+    dataPoints = []
+    try :
+        with alive_bar(endIndex - startIndex + 1) as bar:
+            for i in range(startIndex, endIndex + 1):
+                try: 
+                    image = Image(data['image_link'][i], data['image_id'][i])
+                    image.getImage()
+                    text = image.readTextFrom()
 
-    with alive_bar(endIndex - startIndex + 1) as bar:
-        for i in range(startIndex, endIndex + 1):
-            try: 
-                image = Image(data['image_link'][i], data['image_id'][i])
-                image.getImage()
-                text = image.readTextFrom()
-
-                writer.writerow([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], text])
-                bar()
-            except Exception as e:
-                print(e)
-                writer.writerow([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], 'Context not available'])
-                bar()
-
-    csvfile.close()
+                    dataPoints.append([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], text])
+                    bar()
+                except Exception as e:
+                    print(e)
+                    dataPoints.append([data['image_id'][i], data['image_link'][i], data['group_id'][i], data['entity_name'][i], 'Context not available'])
+                    bar()
+    except Exception as e:
+        print(e)
+    finally :
+        with open(fileName, 'wb') as f:
+            import pickle
+            pickle.dump(dataPoints, f)
 
 
 
